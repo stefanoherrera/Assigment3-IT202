@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment 3 - Text Analysis & BMI Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0d0d0d;
+            padding: 15px;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        h1 {
+            color: #C6A15B;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .task-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+
+        .task-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .task-section h2 {
+            color: #C6A15B;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #e0e0e0;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #444;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #444;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        input[type="file"]::-webkit-file-upload-button {
+            background-color: #C6A15B;
+            color: #0d0d0d;
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+
+        button {
+            background-color: #C6A15B;
+            color: #0d0d0d;
+            padding: 10px 20px;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #D8BB76;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .result-label {
+            color: #C6A15B;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .result-item {
+            margin: 5px 0;
+            font-size: 16px;
+            color: #e0e0e0;
+        }
+
+        .bmi-inputs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .bmi-inputs > div {
+            flex: 1;
+        }
+
+        .error {
+            color: #ff6b6b;
+            margin-top: 10px;
+            padding: 8px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Assignment 3</h1>
+
+        <div class="task-section">
+            <h2>Text File Analysis</h2>
+            <div class="form-group">
+                <label for="textFile">Upload a text file</label>
+                <input type="file" id="textFile" accept=".txt" />
+            </div>
+            <button onclick="analyzeFile()">Analyze File</button>
+            <div id="textResult" class="result">
+                <div class="result-label">Result:</div>
+                <div class="result-item" id="vowelCount"></div>
+                <div class="result-item" id="consonantCount"></div>
+            </div>
+            <div id="textError" class="error"></div>
+        </div>
+
+        <div class="task-section">
+            <h2>BMI Calculator</h2>
+            <div class="form-group">
+                <div class="bmi-inputs">
+                    <div>
+                        <label for="weight">Weight (pounds)</label>
+                        <input type="number" id="weight" placeholder="Enter weight" min="0" step="0.1" />
+                    </div>
+                    <div>
+                        <label for="feet">Feet</label>
+                        <input type="number" id="feet" placeholder="Enter feet" min="0" />
+                    </div>
+                    <div>
+                        <label for="inches">Inches</label>
+                        <input type="number" id="inches" placeholder="Enter inches" min="0" max="11" />
+                    </div>
+                </div>
+            </div>
+            <button onclick="calcBMI()">Calculate BMI</button>
+            <div id="bmiResult" class="result">
+                <div class="result-label">Result:</div>
+                <div class="result-item" id="bmiValue"></div>
+            </div>
+            <div id="bmiError" class="error"></div>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeFile() {
+            const input = document.getElementById('textFile');
+            const result = document.getElementById('textResult');
+            const err = document.getElementById('textError');
+
+            result.classList.remove('show');
+            err.classList.remove('show');
+
+            if (!input.files || input.files.length === 0) {
+                err.textContent = 'Please select a file';
+                err.classList.add('show');
+                return;
+            }
+
+            var file = input.files[0];
+            
+            if (!file.name.endsWith('.txt')) {
+                err.textContent = 'File must be .txt';
+                err.classList.add('show');
+                return;
+            }
+
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+
+                const response = await fetch('http://localhost:3000/api/analyze-text', {
+                    method: 'POST',
+                    body: fd
+                });
+
+                if (!response.ok) {
+                    throw new Error('Server error');
+                }
+
+                const data = await response.json();
+                
+                document.getElementById('vowelCount').textContent = 'Vowels: ' + data.vowels;
+                document.getElementById('consonantCount').textContent = 'Consonants: ' + data.consonants;
+                result.classList.add('show');
+            } catch (error) {
+                err.textContent = 'Error: ' + error.message;
+                err.classList.add('show');
+            }
+        }
+
+        function calcBMI() {
+            const weight = parseFloat(document.getElementById('weight').value);
+            const feet = parseInt(document.getElementById('feet').value);
+            const inches = parseInt(document.getElementById('inches').value);
+            var result = document.getElementById('bmiResult');
+            var err = document.getElementById('bmiError');
+
+            result.classList.remove('show');
+            err.classList.remove('show');
+
+            if (isNaN(weight) || weight <= 0) {
+                err.textContent = 'Invalid weight';
+                err.classList.add('show');
+                return;
+            }
+
+            if (isNaN(feet) || feet < 0) {
+                err.textContent = 'Invalid feet';
+                err.classList.add('show');
+                return;
+            }
+
+            if (isNaN(inches) || inches < 0 || inches > 11) {
+                err.textContent = 'Invalid inches';
+                err.classList.add('show');
+                return;
+            }
+
+            if (feet == 0 && inches == 0) {
+                err.textContent = 'Height cannot be zero';
+                err.classList.add('show');
+                return;
+            }
+
+            var total = feet * 12 + inches;
+            var heightM = total * 0.0254;
+            var weightKg = weight * 0.453592;
+            var bmi = weightKg / (heightM * heightM);
+
+            document.getElementById('bmiValue').textContent = 'BMI: ' + bmi.toFixed(2);
+            result.classList.add('show');
+        }
+    </script>
+</body>
+</html>
+
